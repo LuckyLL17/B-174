@@ -18,6 +18,7 @@
             <div class="module-selector">
                 <button class="module-btn active" data-module="kettle">模块一：反应釜共沉淀</button>
                 <button class="module-btn" data-module="pipe">模块二：管道/微反应器</button>
+                <button class="module-btn" data-module="optimizer">模块三：工艺优化工具</button>
             </div>
 
             <!-- 反应釜面板 -->
@@ -115,6 +116,17 @@
                     <button class="btn btn-secondary" id="pipe-export-btn">导出数据</button>
                 </div>
             </div>
+
+            <div id="optimizer-panel" class="panel">
+                <div class="sub-tab-bar">
+                    <button class="sub-tab-btn active" data-sub="optimizer-sub-panel">参数优化</button>
+                    <button class="sub-tab-btn" data-sub="sensitivity-sub-panel">灵敏度分析</button>
+                    <button class="sub-tab-btn" data-sub="doe-sub-panel">DOE设计</button>
+                </div>
+                <div id="optimizer-sub-panel" class="sub-panel active"></div>
+                <div id="sensitivity-sub-panel" class="sub-panel"></div>
+                <div id="doe-sub-panel" class="sub-panel"></div>
+            </div>
         </aside>
 
         <!-- 右侧可视化区域 -->
@@ -150,6 +162,30 @@
                    </div>
                </div>
             </div>
+
+            <div id="optimizer-panel-charts" style="display: none;">
+               <div class="chart-container optimizer-chart-container">
+                   <h3>优化收敛 / 参数对比</h3>
+                   <div class="canvas-wrapper">
+                       <canvas id="opt-chart" class="chart-canvas"></canvas>
+                   </div>
+               </div>
+               <div class="chart-container optimizer-result-container">
+                   <h3>优化结果</h3>
+                   <div id="opt-result-table" class="result-scroll-area"></div>
+               </div>
+               <div class="chart-container optimizer-chart-container">
+                   <h3>DOE 参数空间</h3>
+                   <div class="canvas-wrapper">
+                       <canvas id="doe-chart" class="chart-canvas"></canvas>
+                   </div>
+               </div>
+               <div class="chart-container optimizer-result-container">
+                   <h3>灵敏度分析 / DOE 结果</h3>
+                   <div id="sa-result-area" class="result-scroll-area"></div>
+                   <div id="doe-result-area" class="result-scroll-area"></div>
+               </div>
+            </div>
         </section>
     </main>
 
@@ -158,8 +194,12 @@
     <script src="js/fluidDynamics.js"></script>
     <script src="js/visualization.js"></script>
     <script src="js/exportExcel.js"></script>
+    <script src="js/sensitivityAnalysis.js"></script>
+    <script src="js/optimizer.js"></script>
+    <script src="js/doeDesign.js"></script>
     <script src="js/reactionKettle.js"></script>
     <script src="js/pipeReactor.js"></script>
+    <script src="js/processOptimizerUI.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>
