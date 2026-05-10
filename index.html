@@ -18,6 +18,7 @@
             <div class="module-selector">
                 <button class="module-btn active" data-module="kettle">模块一：反应釜共沉淀</button>
                 <button class="module-btn" data-module="pipe">模块二：管道/微反应器</button>
+                <button class="module-btn" data-module="advanced">高级工具</button>
             </div>
 
             <!-- 反应釜面板 -->
@@ -115,6 +116,11 @@
                     <button class="btn btn-secondary" id="pipe-export-btn">导出数据</button>
                 </div>
             </div>
+
+            <!-- 高级工具面板 -->
+            <div id="advanced-panel" class="panel">
+                <div id="advanced-tools-container"></div>
+            </div>
         </aside>
 
         <!-- 右侧可视化区域 -->
@@ -150,16 +156,36 @@
                    </div>
                </div>
             </div>
+
+            <!-- 高级工具图表 -->
+            <div id="advanced-panel-charts" style="display: none;">
+               <div class="chart-container">
+                   <h3>分析结果图表 1</h3>
+                   <div class="canvas-wrapper">
+                       <canvas id="adv-chart-1" class="chart-canvas"></canvas>
+                   </div>
+               </div>
+               <div class="chart-container">
+                   <h3>分析结果图表 2</h3>
+                   <div class="canvas-wrapper">
+                       <canvas id="adv-chart-2" class="chart-canvas"></canvas>
+                   </div>
+               </div>
+            </div>
         </section>
     </main>
 
     <!-- 脚本引入 (顺序重要) -->
-    <script src="js/kinetics.js"></script>
-    <script src="js/fluidDynamics.js"></script>
-    <script src="js/visualization.js"></script>
-    <script src="js/exportExcel.js"></script>
-    <script src="js/reactionKettle.js"></script>
-    <script src="js/pipeReactor.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/kinetics.js?v=1.2"></script>
+    <script src="js/fluidDynamics.js?v=1.2"></script>
+    <script src="js/visualization.js?v=1.2"></script>
+    <script src="js/exportExcel.js?v=1.2"></script>
+    <script src="js/reactionKettle.js?v=1.2"></script>
+    <script src="js/pipeReactor.js?v=1.2"></script>
+    <script src="js/sensitivityAnalysis.js?v=1.2"></script>
+    <script src="js/optimizer.js?v=1.2"></script>
+    <script src="js/doe.js?v=1.2"></script>
+    <script src="js/components.js?v=1.2"></script>
+    <script src="js/main.js?v=1.2"></script>
 </body>
 </html>

@@ -7,10 +7,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // 初始化图表实例
     const chartInstances = {};
     
+    // 存储高级工具结果
+    let currentSensitivityResult = null;
+    let currentOptimizerResult = null;
+    let currentDOEResult = null;
+    
     // 初始化
     initModuleSwitcher();
     initSimulateButtons();
     initExportButtons();
+    initAdvancedTools();
 
     // 默认加载反应釜模块
     switchModule('kettle');
@@ -38,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById(`${moduleId}-panel`).classList.add('active');
 
         // 图表区域显示 (Toggle visibility)
-        const chartGroups = ['kettle', 'pipe'];
+        const chartGroups = ['kettle', 'pipe', 'advanced'];
         chartGroups.forEach(m => {
             const chartContainer = document.getElementById(`${m}-panel-charts`);
             if (chartContainer) {
@@ -215,5 +221,305 @@ document.addEventListener('DOMContentLoaded', () => {
             ]);
             Exporter.exportCSV('pipe_simulation_data.csv', ['Distance(m)', 'Time(s)', 'S', 'D50(um)', 'B(#/s)', 'G(m/s)'], rows);
         });
+    }
+
+    /**
+     * 初始化高级工具
+     */
+    function initAdvancedTools() {
+        AdvancedToolsUI.init('advanced-tools-container');
+        bindSensitivityButtons();
+        bindOptimizerButtons();
+        bindDOEButtons();
+    }
+
+    /**
+     * 绑定灵敏度分析按钮
+     */
+    function bindSensitivityButtons() {
+        document.getElementById('sa-run-btn').addEventListener('click', runSensitivityAnalysis);
+        document.getElementById('sa-export-btn').addEventListener('click', exportSensitivityResults);
+    }
+
+    /**
+     * 确保高级工具图表可见
+     */
+    function ensureAdvancedChartsVisible() {
+        const chartContainer = document.getElementById('advanced-panel-charts');
+        if (chartContainer) {
+            chartContainer.style.display = 'contents';
+        }
+        switchModule('advanced');
+    }
+
+    /**
+     * 运行灵敏度分析
+     */
+    function runSensitivityAnalysis() {
+        const config = AdvancedToolsUI.getSensitivityConfig();
+        const baseParams = AdvancedToolsUI.getBaseParams(config.moduleType);
+
+        try {
+            ensureAdvancedChartsVisible();
+            initChartsForModule('advanced');
+
+            currentSensitivityResult = SensitivityAnalysis.analyze(
+                config.moduleType,
+                baseParams,
+                config.perturbation
+            );
+
+            AdvancedToolsUI.updateSensitivityResults(currentSensitivityResult);
+            renderSensitivityCharts(currentSensitivityResult);
+        } catch (e) {
+            console.error('灵敏度分析错误:', e);
+            alert('灵敏度分析执行失败，请查看控制台');
+        }
+    }
+
+    /**
+     * 渲染灵敏度分析图表
+     */
+    function renderSensitivityCharts(results) {
+        const labels = results.ranking.map(r => r.label);
+        const weights = results.ranking.map(r => r.weight);
+        const d50Sens = results.ranking.map(r => Math.abs(r.d50Sensitivity));
+        const solidSens = results.ranking.map(r => Math.abs(r.solidSensitivity));
+
+        chartInstances['adv-chart-1'].render_bar_chart({
+            labels,
+            datasets: [
+                { label: '综合权重', data: weights, color: '#007bff' }
+            ]
+        }, { title: '参数综合权重排名', xLabel: '参数', yLabel: '权重' });
+
+        chartInstances['adv-chart-2'].render_bar_chart({
+            labels,
+            datasets: [
+                { label: 'D50灵敏度', data: d50Sens, color: '#ffc107' },
+                { label: '固含率灵敏度', data: solidSens, color: '#28a745' }
+            ]
+        }, { title: '各指标灵敏度对比', xLabel: '参数', yLabel: '灵敏度指数' });
+    }
+
+    /**
+     * 导出灵敏度分析结果
+     */
+    function exportSensitivityResults() {
+        if (!currentSensitivityResult) {
+            alert('请先执行灵敏度分析');
+            return;
+        }
+
+        const rows = currentSensitivityResult.ranking.map(r => {
+            const param = currentSensitivityResult.parameters.find(p => p.key === r.key);
+            return [
+                r.rank,
+                r.label,
+                param.baselineValue,
+                param.d50.baseline,
+                param.d50.changePercentLow,
+                param.d50.changePercentHigh,
+                r.d50Sensitivity,
+                param.solidContent.baseline,
+                param.solidContent.changePercentLow,
+                param.solidContent.changePercentHigh,
+                r.solidSensitivity,
+                r.weight
+            ];
+        });
+
+        Exporter.exportCSV(
+            'sensitivity_analysis.csv',
+            ['排名', '参数', '基准值', 'D50基准', 'D50变化%(-)', 'D50变化%(+)', 'D50灵敏度',
+             '固含率基准', '固含率变化%(-)', '固含率变化%(+)', '固含率灵敏度', '综合权重'],
+            rows
+        );
+    }
+
+    /**
+     * 绑定优化器按钮
+     */
+    function bindOptimizerButtons() {
+        document.getElementById('opt-run-btn').addEventListener('click', runOptimizer);
+        document.getElementById('opt-apply-btn').addEventListener('click', applyOptimizedParams);
+    }
+
+    /**
+     * 运行优化器
+     */
+    function runOptimizer() {
+        const config = AdvancedToolsUI.getOptimizerConfig();
+
+        try {
+            initChartsForModule('advanced');
+
+            currentOptimizerResult = Optimizer.optimize(config);
+            AdvancedToolsUI.updateOptimizerResults(currentOptimizerResult);
+            renderOptimizerCharts(currentOptimizerResult);
+        } catch (e) {
+            console.error('优化器错误:', e);
+            alert('优化执行失败，请查看控制台');
+        }
+    }
+
+    /**
+     * 渲染优化器图表
+     */
+    function renderOptimizerCharts(results) {
+        const history = results.history;
+        const iterations = history.map((_, i) => i + 1);
+        const scores = history.map(h => h.score * 100);
+
+        chartInstances['adv-chart-1'].render_line_chart({
+            labels: iterations,
+            datasets: [
+                { label: '优化误差 (%)', data: scores, color: '#dc3545' }
+            ]
+        }, { title: '优化收敛过程', xLabel: '迭代次数', yLabel: '误差 (%)' });
+
+        const paramKeys = Object.keys(results.bestParams).slice(0, 6);
+        const paramLabels = paramKeys.map(k => {
+            const config = results.config.moduleType === 'kettle'
+                ? SensitivityAnalysis.KETTLE_PARAMS
+                : SensitivityAnalysis.PIPE_PARAMS;
+            const param = config.find(p => p.key === k);
+            return param ? param.label : k;
+        });
+        const paramValues = paramKeys.map(k => results.bestParams[k]);
+
+        chartInstances['adv-chart-2'].render_bar_chart({
+            labels: paramLabels,
+            datasets: [
+                { label: '最优值', data: paramValues, color: '#6f42c1' }
+            ]
+        }, { title: '最优参数组合', xLabel: '参数', yLabel: '值' });
+    }
+
+    /**
+     * 应用优化后的参数到主模块
+     */
+    function applyOptimizedParams() {
+        if (!currentOptimizerResult) {
+            alert('请先执行参数优化');
+            return;
+        }
+
+        const { moduleType, bestParams } = currentOptimizerResult;
+
+        if (moduleType === 'kettle') {
+            if (bestParams.saltConc) document.getElementById('k-salt').value = bestParams.saltConc.toFixed(2);
+            if (bestParams.nh3Conc) document.getElementById('k-nh3').value = bestParams.nh3Conc.toFixed(2);
+            if (bestParams.naohConc) document.getElementById('k-naoh').value = bestParams.naohConc.toFixed(2);
+            if (bestParams.feedRate) document.getElementById('k-flow').value = bestParams.feedRate.toFixed(0);
+            if (bestParams.stirSpeed) document.getElementById('k-stir').value = bestParams.stirSpeed.toFixed(0);
+            if (bestParams.totalTime) document.getElementById('k-time').value = bestParams.totalTime.toFixed(0);
+            if (bestParams.phCurve) document.getElementById('k-ph').value = bestParams.phCurve.toFixed(1);
+            if (bestParams.tempCurve) document.getElementById('k-temp').value = bestParams.tempCurve.toFixed(0);
+        } else {
+            if (bestParams.initFlow) document.getElementById('p-flow').value = bestParams.initFlow.toFixed(0);
+            if (bestParams.initConc) document.getElementById('p-salt').value = bestParams.initConc.toFixed(2);
+            if (bestParams.initNH3) document.getElementById('p-nh3').value = bestParams.initNH3.toFixed(2);
+            if (bestParams.initPH) document.getElementById('p-ph').value = bestParams.initPH.toFixed(1);
+            if (bestParams.initTemp) document.getElementById('p-temp').value = bestParams.initTemp.toFixed(0);
+            if (bestParams.pipeLength) document.getElementById('p-len').value = bestParams.pipeLength.toFixed(0);
+            if (bestParams.pipeDiameter) document.getElementById('p-dia').value = bestParams.pipeDiameter.toFixed(0);
+        }
+
+        alert('最优参数已应用到主模块面板');
+    }
+
+    /**
+     * 绑定DOE按钮
+     */
+    function bindDOEButtons() {
+        document.getElementById('doe-run-btn').addEventListener('click', runDOE);
+        document.getElementById('doe-export-btn').addEventListener('click', exportDOEResults);
+    }
+
+    /**
+     * 运行DOE
+     */
+    function runDOE() {
+        const config = AdvancedToolsUI.getDOEConfig();
+        const factors = AdvancedToolsUI.getDOEFactors(config.moduleType);
+
+        try {
+            initChartsForModule('advanced');
+
+            const design = DOE.generateDesign({
+                method: config.method,
+                factors,
+                numSamples: config.numSamples,
+                centerPoints: config.centerPoints
+            });
+
+            currentDOEResult = DOE.executeExperiments(design, config.moduleType);
+            AdvancedToolsUI.updateDOEResults(currentDOEResult);
+            renderDOECharts(currentDOEResult);
+        } catch (e) {
+            console.error('DOE错误:', e);
+            alert('实验设计执行失败，请查看控制台');
+        }
+    }
+
+    /**
+     * 渲染DOE图表
+     */
+    function renderDOECharts(results) {
+        const runIds = results.experiments.map(e => e.runId);
+        const d50Values = results.experiments.map(e => e.response.d50);
+        const solidValues = results.experiments.map(e => e.response.solidContent);
+
+        chartInstances['adv-chart-1'].render_line_chart({
+            labels: runIds,
+            datasets: [
+                { label: 'D50 (μm)', data: d50Values, color: '#ffc107' },
+                { label: '固含率 (%)', data: solidValues, color: '#28a745' }
+            ]
+        }, { title: '各实验响应值', xLabel: '实验编号', yLabel: '响应值' });
+
+        const factorKeys = Object.keys(results.analysis.effects);
+        const factorLabels = factorKeys.map(k => {
+            const factor = results.factors.find(f => f.key === k);
+            return factor ? factor.label : k;
+        });
+        const d50Effects = factorKeys.map(k => results.analysis.effects[k]?.d50 || 0);
+        const solidEffects = factorKeys.map(k => results.analysis.effects[k]?.solidContent || 0);
+
+        chartInstances['adv-chart-2'].render_bar_chart({
+            labels: factorLabels,
+            datasets: [
+                { label: 'D50效应', data: d50Effects, color: '#ffc107' },
+                { label: '固含率效应', data: solidEffects, color: '#28a745' }
+            ]
+        }, { title: '因子主效应分析', xLabel: '因子', yLabel: '效应值' });
+    }
+
+    /**
+     * 导出DOE结果
+     */
+    function exportDOEResults() {
+        if (!currentDOEResult) {
+            alert('请先执行实验设计');
+            return;
+        }
+
+        const factorKeys = currentDOEResult.factors.map(f => f.key);
+        const factorLabels = currentDOEResult.factors.map(f => f.label);
+
+        const rows = currentDOEResult.experiments.map(exp => [
+            exp.runId,
+            ...factorKeys.map(k => exp.factors[k]),
+            exp.response.d50,
+            exp.response.solidContent,
+            exp.response.supersaturation
+        ]);
+
+        Exporter.exportCSV(
+            'doe_results.csv',
+            ['Run', ...factorLabels, 'D50(μm)', '固含率(%)', '最大过饱和度'],
+            rows
+        );
     }
 });
