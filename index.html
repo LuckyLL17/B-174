@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NCM 前驱体结晶数字孪生 (NCM Digital Twin)</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <h1>NCM 前驱体结晶数字孪生工具</h1>
+        <div style="font-size: 0.9rem; opacity: 0.8;">离线工程版 V1.0</div>
+    </header>
+
+    <main>
+        <!-- 左侧控制面板 -->
+        <aside class="sidebar">
+            <div class="module-selector">
+                <button class="module-btn active" data-module="kettle">模块一：反应釜共沉淀</button>
+                <button class="module-btn" data-module="pipe">模块二：管道/微反应器</button>
+            </div>
+
+            <!-- 反应釜面板 -->
+            <div id="kettle-panel" class="panel active">
+                <div class="input-section">
+                    <h3>进料参数</h3>
+                    <div class="form-group">
+                        <label>金属盐浓度 (mol/L)</label>
+                        <input type="number" id="k-salt" value="2.0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>氨水浓度 (mol/L)</label>
+                        <input type="number" id="k-nh3" value="0.5" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>碱液浓度 (mol/L)</label>
+                        <input type="number" id="k-naoh" value="4.0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>进料速度 (L/h)</label>
+                        <input type="number" id="k-flow" value="10" step="1">
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <h3>控制参数</h3>
+                    <div class="form-group">
+                        <label>pH 设定值</label>
+                        <input type="number" id="k-ph" value="11.0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>温度 (°C)</label>
+                        <input type="number" id="k-temp" value="55" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label>搅拌转速 (rpm)</label>
+                        <input type="number" id="k-stir" value="600" step="10">
+                    </div>
+                    <div class="form-group">
+                        <label>反应时间 (h)</label>
+                        <input type="number" id="k-time" value="10" step="1">
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="kettle-calc-btn">开始计算</button>
+                    <button class="btn btn-secondary" id="kettle-export-btn">导出数据</button>
+                </div>
+            </div>
+
+            <!-- 管道面板 -->
+            <div id="pipe-panel" class="panel">
+                <div class="input-section">
+                    <h3>管道几何</h3>
+                    <div class="form-group">
+                        <label>总长度 (m)</label>
+                        <input type="number" id="p-len" value="50" step="5">
+                    </div>
+                    <div class="form-group">
+                        <label>管径 (mm)</label>
+                        <input type="number" id="p-dia" value="20" step="1">
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <h3>工艺参数 (入口)</h3>
+                    <div class="form-group">
+                        <label>初始流量 (L/h)</label>
+                        <input type="number" id="p-flow" value="200" step="10">
+                    </div>
+                    <div class="form-group">
+                        <label>初始金属浓度 (mol/L)</label>
+                        <input type="number" id="p-salt" value="2.0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>初始氨水浓度 (mol/L)</label>
+                        <input type="number" id="p-nh3" value="0.5" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>初始 pH</label>
+                        <input type="number" id="p-ph" value="11.2" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>温度 (°C)</label>
+                        <input type="number" id="p-temp" value="60" step="1">
+                    </div>
+                    <div class="form-group" style="display:flex; align-items:center; gap:10px;">
+                        <input type="checkbox" id="p-multi-feed" style="width:auto;">
+                        <label style="margin:0;">启用多级加料 (Demo)</label>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="pipe-calc-btn">开始计算</button>
+                    <button class="btn btn-secondary" id="pipe-export-btn">导出数据</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 右侧可视化区域 -->
+        <section class="visualization-area">
+            <!-- 反应釜图表 -->
+            <div id="kettle-panel-charts" style="display: contents;">
+               <div class="chart-container">
+                   <h3>浓度与过饱和度</h3>
+                   <div class="canvas-wrapper">
+                       <canvas id="k-chart-1" class="chart-canvas"></canvas>
+                   </div>
+               </div>
+               <div class="chart-container">
+                   <h3>粒径与固含率</h3>
+                   <div class="canvas-wrapper">
+                       <canvas id="k-chart-2" class="chart-canvas"></canvas>
+                   </div>
+               </div>
+            </div>
+
+            <!-- 管道图表 -->
+             <div id="pipe-panel-charts" style="display: contents;">
+               <div class="chart-container">
+                   <h3>沿程过饱和度与粒径 (Module 2)</h3>
+                   <div class="canvas-wrapper">
+                       <canvas id="p-chart-1" class="chart-canvas"></canvas>
+                   </div>
+               </div>
+               <div class="chart-container">
+                   <h3>沿程成核与生长速率 (Module 2)</h3>
+                   <div class="canvas-wrapper">
+                       <canvas id="p-chart-2" class="chart-canvas"></canvas>
+                   </div>
+               </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 脚本引入 (顺序重要) -->
+    <script src="js/kinetics.js"></script>
+    <script src="js/fluidDynamics.js"></script>
+    <script src="js/visualization.js"></script>
+    <script src="js/exportExcel.js"></script>
+    <script src="js/reactionKettle.js"></script>
+    <script src="js/pipeReactor.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
