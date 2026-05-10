@@ -212,6 +212,114 @@ class ChartRenderer {
             ctx.fillText(d.label, startX + 15, startY + i * 20 + 9);
         });
     }
+
+    /**
+     * 绘制柱状图
+     * @param {Object} data - { 
+     *   labels: string[], // X轴标签
+     *   datasets: [{ label: string, data: number[], color: string }]
+     * }
+     * @param {Object} options - { title: string, xLabel: string, yLabel: string }
+     */
+    render_bar_chart(data, options = {}) {
+        this.ctx.clearRect(0, 0, this.width, this.height);
+        
+        if (!data.labels || data.labels.length === 0) return;
+
+        const allY = [];
+        data.datasets.forEach(d => allY.push(...d.data));
+        const minY = Math.min(0, ...allY);
+        const maxY = Math.max(...allY) * 1.1;
+
+        this.drawBarAxes(minY, maxY, options);
+        this.drawBars(data, minY, maxY);
+        this.drawLegend(data.datasets);
+    }
+
+    drawBarAxes(minY, maxY, options) {
+        const ctx = this.ctx;
+        const originX = this.padding.left;
+        const originY = this.height - this.padding.bottom;
+        const topY = this.padding.top;
+        const rightX = this.width - this.padding.right;
+
+        ctx.strokeStyle = '#666';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(originX, topY);
+        ctx.lineTo(originX, originY);
+        ctx.lineTo(rightX, originY);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#eee';
+        ctx.setLineDash([5, 5]);
+        
+        for (let i = 0; i <= 5; i++) {
+            const val = minY + (maxY - minY) * (i / 5);
+            const y = this.mapY(val, minY, maxY);
+            ctx.beginPath();
+            ctx.moveTo(originX, y);
+            ctx.lineTo(rightX, y);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#666';
+            ctx.textAlign = 'right';
+            ctx.fillText(val.toFixed(2), originX - 5, y + 4);
+        }
+        ctx.setLineDash([]);
+
+        if (options.xLabel) {
+            ctx.fillStyle = '#333';
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillText(options.xLabel, (originX + rightX) / 2, this.height - 5);
+        }
+        if (options.yLabel) {
+            ctx.save();
+            ctx.translate(15, (topY + originY) / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.textAlign = 'center';
+            ctx.fillText(options.yLabel, 0, 0);
+            ctx.restore();
+        }
+        
+        if (options.title) {
+            ctx.fillStyle = '#333';
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.fillText(options.title, this.width / 2, 20);
+        }
+    }
+
+    drawBars(data, minY, maxY) {
+        const ctx = this.ctx;
+        const originY = this.height - this.padding.bottom;
+        const plotWidth = this.width - this.padding.left - this.padding.right;
+        const numLabels = data.labels.length;
+        const numDatasets = data.datasets.length;
+        const barWidth = plotWidth / numLabels / (numDatasets + 1);
+        const groupWidth = barWidth * numDatasets;
+
+        data.labels.forEach((label, labelIndex) => {
+            const groupX = this.padding.left + (plotWidth / numLabels) * labelIndex + 
+                          ((plotWidth / numLabels) - groupWidth) / 2;
+
+            data.datasets.forEach((dataset, datasetIndex) => {
+                const value = dataset.data[labelIndex];
+                const barX = groupX + barWidth * datasetIndex;
+                const barY = this.mapY(value, minY, maxY);
+                const barHeight = originY - barY;
+
+                ctx.fillStyle = dataset.color || this.colors[datasetIndex % this.colors.length];
+                ctx.fillRect(barX, barY, barWidth * 0.8, barHeight);
+
+                ctx.fillStyle = '#333';
+                ctx.textAlign = 'center';
+                ctx.font = '9px sans-serif';
+                ctx.fillText(label, groupX + groupWidth / 2, originY + 15);
+            });
+        });
+    }
 }
 
 // 供全局使用
