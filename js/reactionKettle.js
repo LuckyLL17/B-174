@@ -58,8 +58,8 @@ const ReactionKettle = {
 
             // 1. 获取当前控制参数 (pH, T)
             // 简单处理：假设为常数
-            const currentPH = typeof phCurve === 'number' ? phCurve : phCurve[0]; 
-            const currentT = typeof tempCurve === 'number' ? tempCurve : tempCurve[0];
+            const currentPH = typeof phCurve === 'number' ? phCurve : (Array.isArray(phCurve) ? phCurve[0] : 11.0); 
+            const currentT = typeof tempCurve === 'number' ? tempCurve : (Array.isArray(tempCurve) ? tempCurve[0] : 55);
 
             // 2. 进料 (Mass Balance)
             // Feed rate L/h -> L/s
