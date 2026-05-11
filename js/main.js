@@ -75,11 +75,12 @@ document.addEventListener('DOMContentLoaded', () => {
      * 初始化图表对象
      */
     function initChartsForModule(moduleId) {
-        // Fix: Select correctly from the chart container, not the sidebar panel
         const containers = document.querySelectorAll(`#${moduleId}-panel-charts .chart-canvas`);
         containers.forEach(canvas => {
             if (!chartInstances[canvas.id]) {
                 chartInstances[canvas.id] = new ChartRenderer(canvas.id);
+            } else {
+                chartInstances[canvas.id].resize();
             }
         });
     }
@@ -265,27 +266,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderSensitivityCharts(results) {
+        initChartsForModule('sensitivity');
+
         const d50Ranking = results.rankings.d50;
         const solidRanking = results.rankings.solidContent;
         const combinedRanking = results.rankings.combined;
 
-        chartInstances['sa-chart-1'].render_bar_chart({
-            labels: d50Ranking.map(r => r.label),
-            datasets: [{ label: 'D50 灵敏度权重', data: d50Ranking.map(r => r.weight), color: '#dc3545' }]
-        }, { title: 'D50 灵敏度权重排名', labels: d50Ranking.map(r => r.label) });
+        if (chartInstances['sa-chart-1']) {
+            chartInstances['sa-chart-1'].render_bar_chart({
+                labels: d50Ranking.map(r => r.label),
+                datasets: [{ label: 'D50 灵敏度权重', data: d50Ranking.map(r => r.weight), color: '#dc3545' }]
+            }, { title: 'D50 灵敏度权重排名', labels: d50Ranking.map(r => r.label) });
+        }
 
-        chartInstances['sa-chart-2'].render_bar_chart({
-            labels: solidRanking.map(r => r.label),
-            datasets: [{ label: '固含率灵敏度权重', data: solidRanking.map(r => r.weight), color: '#28a745' }]
-        }, { title: '固含率灵敏度权重排名', labels: solidRanking.map(r => r.label) });
+        if (chartInstances['sa-chart-2']) {
+            chartInstances['sa-chart-2'].render_bar_chart({
+                labels: solidRanking.map(r => r.label),
+                datasets: [{ label: '固含率灵敏度权重', data: solidRanking.map(r => r.weight), color: '#28a745' }]
+            }, { title: '固含率灵敏度权重排名', labels: solidRanking.map(r => r.label) });
+        }
 
-        chartInstances['sa-chart-3'].render_bar_chart({
-            labels: combinedRanking.map(r => r.label),
-            datasets: [
-                { label: 'D50权重', data: combinedRanking.map(r => results.parameters[r.param].sensitivity.d50), color: '#dc3545' },
-                { label: '固含率权重', data: combinedRanking.map(r => results.parameters[r.param].sensitivity.solidContent), color: '#28a745' }
-            ]
-        }, { title: '综合灵敏度分析对比', labels: combinedRanking.map(r => r.label) });
+        if (chartInstances['sa-chart-3']) {
+            chartInstances['sa-chart-3'].render_bar_chart({
+                labels: combinedRanking.map(r => r.label),
+                datasets: [
+                    { label: 'D50权重', data: combinedRanking.map(r => results.parameters[r.param].sensitivity.d50), color: '#dc3545' },
+                    { label: '固含率权重', data: combinedRanking.map(r => results.parameters[r.param].sensitivity.solidContent), color: '#28a745' }
+                ]
+            }, { title: '综合灵敏度分析对比', labels: combinedRanking.map(r => r.label) });
+        }
     }
 
     function renderSensitivityReport(results) {
@@ -368,9 +377,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderOptimizerCharts(result) {
+        initChartsForModule('optimizer');
         result.fullResult = result.fullResult || {};
 
-        if (result.fullResult.time) {
+        if (result.fullResult.time && chartInstances['opt-chart-2']) {
             chartInstances['opt-chart-2'].render_line_chart({
                 labels: result.fullResult.time,
                 datasets: [
@@ -382,18 +392,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const paramNames = Object.keys(result.optimalParameters);
         const defaultParams = ParameterOptimizer.getDefaultParams();
-        chartInstances['opt-chart-3'].render_bar_chart({
-            labels: paramNames.map(n => result.optimalParameters[n].label),
-            datasets: [
-                { label: '默认值', data: paramNames.map(n => defaultParams[n]), color: '#6c757d' },
-                { label: '优化值', data: paramNames.map(n => result.optimalParameters[n].value), color: '#007bff' }
-            ]
-        }, { title: '参数对比分析', labels: paramNames.map(n => result.optimalParameters[n].label) });
+        if (chartInstances['opt-chart-3']) {
+            chartInstances['opt-chart-3'].render_bar_chart({
+                labels: paramNames.map(n => result.optimalParameters[n].label),
+                datasets: [
+                    { label: '默认值', data: paramNames.map(n => defaultParams[n]), color: '#6c757d' },
+                    { label: '优化值', data: paramNames.map(n => result.optimalParameters[n].value), color: '#007bff' }
+                ]
+            }, { title: '参数对比分析', labels: paramNames.map(n => result.optimalParameters[n].label) });
+        }
 
-        chartInstances['opt-chart-1'].render_line_chart({
-            labels: [1, 2, 3, 4, 5],
-            datasets: [{ label: '误差收敛', data: [0.5, 0.3, 0.15, 0.08, 0.05], color: '#dc3545' }]
-        }, { title: '优化收敛过程示意', xLabel: 'Iteration', yLabel: 'Error' });
+        if (chartInstances['opt-chart-1']) {
+            chartInstances['opt-chart-1'].render_line_chart({
+                labels: [1, 2, 3, 4, 5],
+                datasets: [{ label: '误差收敛', data: [0.5, 0.3, 0.15, 0.08, 0.05], color: '#dc3545' }]
+            }, { title: '优化收敛过程示意', xLabel: 'Iteration', yLabel: 'Error' });
+        }
     }
 
     function renderOptimizerReport(result) {
@@ -524,22 +538,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderDOECharts(results, analysis, design) {
+        initChartsForModule('doe');
+
         const scatterData = results.map(r => ({
             x: r.parameters.saltConc,
             y: r.outputs.d50
         }));
 
-        chartInstances['doe-chart-1'].render_scatter_chart({
-            datasets: [{ label: 'D50 vs 盐浓度', data: scatterData, color: '#007bff' }]
-        }, { title: 'D50 响应面分析', xLabel: '盐浓度 (mol/L)', yLabel: 'D50 (μm)' });
+        if (chartInstances['doe-chart-1']) {
+            chartInstances['doe-chart-1'].render_scatter_chart({
+                datasets: [{ label: 'D50 vs 盐浓度', data: scatterData, color: '#007bff' }]
+            }, { title: 'D50 响应面分析', xLabel: '盐浓度 (mol/L)', yLabel: 'D50 (μm)' });
+        }
 
         const factorNames = design.factorNames;
-        const effectData = factorNames.map(f => analysis.effects[f]?.d50 || 0);
+        const effectData = factorNames.map(f => Math.abs(analysis.effects[f]?.d50 || 0));
 
-        chartInstances['doe-chart-2'].render_bar_chart({
-            labels: factorNames.map(f => design.factors[f]?.label || f),
-            datasets: [{ label: '主效应 (D50)', data: effectData, color: '#6610f2' }]
-        }, { title: '各因子主效应图', labels: factorNames.map(f => design.factors[f]?.label || f) });
+        if (chartInstances['doe-chart-2']) {
+            chartInstances['doe-chart-2'].render_bar_chart({
+                labels: factorNames.map(f => design.factors[f]?.label || f),
+                datasets: [{ label: '主效应 (D50)', data: effectData, color: '#6610f2' }]
+            }, { title: '各因子主效应图', labels: factorNames.map(f => design.factors[f]?.label || f) });
+        }
     }
 
     function renderDOEReport(design, analysis) {

@@ -17,30 +17,28 @@ class ChartRenderer {
     }
 
     resize() {
-        // Use parent container size
         const parent = this.canvas.parentElement;
         const rect = parent.getBoundingClientRect();
         
-        // High-DPI Support
+        let width = rect.width || 400;
+        let height = rect.height || 300;
+        
+        if (width < 50) width = 400;
+        if (height < 50) height = 300;
+        
         const dpr = window.devicePixelRatio || 1;
         
-        // Set actual size in memory (scaled to account for extra pixel density)
-        this.canvas.width = rect.width * dpr;
-        this.canvas.height = rect.height * dpr;
+        this.canvas.width = width * dpr;
+        this.canvas.height = height * dpr;
         
-        // Set visible size (css pixels)
-        this.canvas.style.width = `${rect.width}px`;
-        this.canvas.style.height = `${rect.height}px`;
+        this.canvas.style.width = `${width}px`;
+        this.canvas.style.height = `${height}px`;
         
-        // Normalize coordinate system to use css pixels
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
         this.ctx.scale(dpr, dpr);
 
-        // Store logical width/height for calculations
-        this.width = rect.width;
-        this.height = rect.height;
-        
-        // Redraw if data exists (user needs to trigger this or logic needs to handle)
-        // For now, logic relies on external call to render
+        this.width = width;
+        this.height = height;
     }
 
     /**
