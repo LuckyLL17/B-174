@@ -212,6 +212,135 @@ class ChartRenderer {
             ctx.fillText(d.label, startX + 15, startY + i * 20 + 9);
         });
     }
+
+    render_bar_chart(data, options = {}) {
+        this.ctx.clearRect(0, 0, this.width, this.height);
+        
+        if (!data.labels || data.labels.length === 0) return;
+
+        let allValues = [];
+        data.datasets.forEach(d => allValues.push(...d.data));
+        let maxY = Math.max(...allValues);
+        let minY = 0;
+        
+        const yRange = maxY - minY;
+        if (yRange === 0) maxY = 1;
+        maxY += yRange * 0.1;
+
+        this.drawBarAxes(minY, maxY, options);
+
+        const numBars = data.labels.length;
+        const barWidth = (this.width - this.padding.left - this.padding.right) / numBars * 0.6;
+        const gap = (this.width - this.padding.left - this.padding.right) / numBars * 0.2;
+
+        data.datasets.forEach((dataset, di) => {
+            const color = dataset.color || this.colors[di % this.colors.length];
+            dataset.data.forEach((value, i) => {
+                const x = this.padding.left + gap / 2 + i * (barWidth + gap);
+                const y = this.mapY(value, minY, maxY);
+                const height = this.height - this.padding.bottom - y;
+                
+                this.ctx.fillStyle = color;
+                this.ctx.fillRect(x, y, barWidth, height);
+                
+                this.ctx.fillStyle = '#333';
+                this.ctx.textAlign = 'center';
+                this.ctx.font = '10px sans-serif';
+                this.ctx.fillText(value.toFixed(3), x + barWidth / 2, y - 5);
+            });
+        });
+
+        if (options.title) {
+            this.ctx.fillStyle = '#333';
+            this.ctx.textAlign = 'center';
+            this.ctx.font = 'bold 14px sans-serif';
+            this.ctx.fillText(options.title, this.width / 2, 20);
+        }
+    }
+
+    drawBarAxes(minY, maxY, options) {
+        const ctx = this.ctx;
+        const originX = this.padding.left;
+        const originY = this.height - this.padding.bottom;
+        const topY = this.padding.top;
+        const rightX = this.width - this.padding.right;
+
+        ctx.strokeStyle = '#666';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(originX, topY);
+        ctx.lineTo(originX, originY);
+        ctx.lineTo(rightX, originY);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#eee';
+        ctx.setLineDash([5, 5]);
+        for (let i = 0; i <= 5; i++) {
+            const val = minY + (maxY - minY) * (i / 5);
+            const y = this.mapY(val, minY, maxY);
+            ctx.beginPath();
+            ctx.moveTo(originX, y);
+            ctx.lineTo(rightX, y);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#666';
+            ctx.textAlign = 'right';
+            ctx.fillText(val.toPrecision(3), originX - 5, y + 4);
+        }
+        ctx.setLineDash([]);
+
+        if (options.labels) {
+            const numLabels = options.labels.length;
+            const barWidth = (this.width - this.padding.left - this.padding.right) / numLabels;
+            options.labels.forEach((label, i) => {
+                const x = this.padding.left + barWidth * (i + 0.5);
+                ctx.fillStyle = '#666';
+                ctx.textAlign = 'center';
+                ctx.save();
+                ctx.translate(x, originY + 10);
+                ctx.rotate(-Math.PI / 4);
+                ctx.font = '9px sans-serif';
+                ctx.fillText(label, 0, 0);
+                ctx.restore();
+            });
+        }
+    }
+
+    render_scatter_chart(data, options = {}) {
+        this.ctx.clearRect(0, 0, this.width, this.height);
+        
+        if (!data.datasets || data.datasets.length === 0) return;
+
+        let allX = [], allY = [];
+        data.datasets.forEach(d => {
+            d.data.forEach(p => {
+                allX.push(p.x);
+                allY.push(p.y);
+            });
+        });
+
+        const minX = Math.min(...allX);
+        const maxX = Math.max(...allX);
+        const minY = Math.min(...allY);
+        const maxY = Math.max(...allY);
+
+        const xRange = maxX - minX || 1;
+        const yRange = maxY - minY || 1;
+
+        this.drawAxes(minX - xRange * 0.1, maxX + xRange * 0.1, minY - yRange * 0.1, maxY + yRange * 0.1, options);
+
+        data.datasets.forEach((dataset, di) => {
+            const color = dataset.color || this.colors[di % this.colors.length];
+            this.ctx.fillStyle = color;
+            dataset.data.forEach(p => {
+                const x = this.mapX(p.x, minX - xRange * 0.1, maxX + xRange * 0.1);
+                const y = this.mapY(p.y, minY - yRange * 0.1, maxY + yRange * 0.1);
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, 4, 0, Math.PI * 2);
+                this.ctx.fill();
+            });
+        });
+    }
 }
 
 // 供全局使用

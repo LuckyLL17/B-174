@@ -18,6 +18,9 @@
             <div class="module-selector">
                 <button class="module-btn active" data-module="kettle">模块一：反应釜共沉淀</button>
                 <button class="module-btn" data-module="pipe">模块二：管道/微反应器</button>
+                <button class="module-btn" data-module="sensitivity">模块三：灵敏度分析</button>
+                <button class="module-btn" data-module="optimizer">模块四：参数优化器</button>
+                <button class="module-btn" data-module="doe">模块五：DOE实验设计</button>
             </div>
 
             <!-- 反应釜面板 -->
@@ -115,6 +118,149 @@
                     <button class="btn btn-secondary" id="pipe-export-btn">导出数据</button>
                 </div>
             </div>
+
+            <!-- 灵敏度分析面板 -->
+            <div id="sensitivity-panel" class="panel">
+                <div class="input-section">
+                    <h3>分析设置</h3>
+                    <div class="form-group">
+                        <label>参数变化范围 (%)</label>
+                        <input type="number" id="sa-range" value="10" step="5" min="1" max="50">
+                    </div>
+                    <div class="form-group">
+                        <label>采样点数</label>
+                        <input type="number" id="sa-steps" value="5" step="1" min="3" max="11">
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <h3>基准参数</h3>
+                    <div class="form-group">
+                        <label>金属盐浓度 (mol/L)</label>
+                        <input type="number" id="sa-salt" value="2.0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>氨水浓度 (mol/L)</label>
+                        <input type="number" id="sa-nh3" value="0.5" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>pH 设定值</label>
+                        <input type="number" id="sa-ph" value="11.0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>温度 (°C)</label>
+                        <input type="number" id="sa-temp" value="55" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label>反应时间 (h)</label>
+                        <input type="number" id="sa-time" value="10" step="1">
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="sa-calc-btn">开始分析</button>
+                    <button class="btn btn-secondary" id="sa-export-btn">导出报告</button>
+                </div>
+            </div>
+
+            <!-- 参数优化器面板 -->
+            <div id="optimizer-panel" class="panel">
+                <div class="input-section">
+                    <h3>优化目标</h3>
+                    <div class="form-group">
+                        <label>目标D50 (μm)</label>
+                        <input type="number" id="opt-target-d50" value="10.0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>D50权重</label>
+                        <input type="number" id="opt-d50-weight" value="1.0" step="0.1" min="0.1" max="2">
+                    </div>
+                    <div class="form-group">
+                        <label>目标固含率 (%)</label>
+                        <input type="number" id="opt-target-solid" value="15.0" step="0.5">
+                    </div>
+                    <div class="form-group">
+                        <label>固含率权重</label>
+                        <input type="number" id="opt-solid-weight" value="0.5" step="0.1" min="0.1" max="2">
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <h3>优化算法</h3>
+                    <div class="form-group">
+                        <label>优化方法</label>
+                        <select id="opt-method">
+                            <option value="gradient">梯度下降法</option>
+                            <option value="random">随机搜索法</option>
+                            <option value="grid">网格搜索法</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>最大迭代次数</label>
+                        <input type="number" id="opt-iterations" value="30" step="5" min="10" max="100">
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="opt-calc-btn">开始优化</button>
+                    <button class="btn btn-secondary" id="opt-export-btn">导出结果</button>
+                </div>
+            </div>
+
+            <!-- DOE实验设计面板 -->
+            <div id="doe-panel" class="panel">
+                <div class="input-section">
+                    <h3>设计方法</h3>
+                    <div class="form-group">
+                        <label>实验设计方法</label>
+                        <select id="doe-method">
+                            <option value="fullFactorial">全因子设计</option>
+                            <option value="fractionalFactorial">部分因子设计</option>
+                            <option value="centralComposite">中心复合设计</option>
+                            <option value="boxBehnken">Box-Behnken设计</option>
+                            <option value="latinHypercube">拉丁超立方采样</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>水平数/样本数</label>
+                        <input type="number" id="doe-levels" value="2" step="1" min="2" max="5">
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <h3>因子范围设置</h3>
+                    <div class="form-group">
+                        <label>金属盐浓度 - 最小值</label>
+                        <input type="number" id="doe-salt-min" value="1.5" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>金属盐浓度 - 最大值</label>
+                        <input type="number" id="doe-salt-max" value="2.5" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>氨水浓度 - 最小值</label>
+                        <input type="number" id="doe-nh3-min" value="0.3" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>氨水浓度 - 最大值</label>
+                        <input type="number" id="doe-nh3-max" value="0.7" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>pH值 - 最小值</label>
+                        <input type="number" id="doe-ph-min" value="10.5" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>pH值 - 最大值</label>
+                        <input type="number" id="doe-ph-max" value="11.5" step="0.1">
+                    </div>
+                </div>
+
+                <div class="action-buttons three-buttons">
+                    <button class="btn btn-primary" id="doe-gen-btn">生成设计</button>
+                    <button class="btn btn-secondary" id="doe-run-btn">运行模拟</button>
+                    <button class="btn btn-secondary" id="doe-export-btn">导出数据</button>
+                </div>
+            </div>
         </aside>
 
         <!-- 右侧可视化区域 -->
@@ -150,6 +296,84 @@
                    </div>
                </div>
             </div>
+
+            <!-- 灵敏度分析图表 -->
+            <div id="sensitivity-panel-charts" style="display: none;">
+               <div class="chart-container">
+                   <h3>D50 灵敏度权重排名</h3>
+                   <div class="canvas-wrapper">
+                       <canvas id="sa-chart-1" class="chart-canvas"></canvas>
+                   </div>
+               </div>
+               <div class="chart-container">
+                   <h3>固含率灵敏度权重排名</h3>
+                   <div class="canvas-wrapper">
+                       <canvas id="sa-chart-2" class="chart-canvas"></canvas>
+                   </div>
+               </div>
+               <div class="chart-container">
+                   <h3>综合灵敏度分析</h3>
+                   <div class="canvas-wrapper">
+                       <canvas id="sa-chart-3" class="chart-canvas"></canvas>
+                   </div>
+               </div>
+               <div class="chart-container result-panel">
+                   <h3>灵敏度分析报告</h3>
+                   <div id="sa-report" class="report-content"></div>
+               </div>
+            </div>
+
+            <!-- 参数优化器图表 -->
+            <div id="optimizer-panel-charts" style="display: none;">
+               <div class="chart-container">
+                   <h3>优化收敛曲线</h3>
+                   <div class="canvas-wrapper">
+                       <canvas id="opt-chart-1" class="chart-canvas"></canvas>
+                   </div>
+               </div>
+               <div class="chart-container">
+                   <h3>优化后粒径变化</h3>
+                   <div class="canvas-wrapper">
+                       <canvas id="opt-chart-2" class="chart-canvas"></canvas>
+                   </div>
+               </div>
+               <div class="chart-container">
+                   <h3>参数对比分析</h3>
+                   <div class="canvas-wrapper">
+                       <canvas id="opt-chart-3" class="chart-canvas"></canvas>
+                   </div>
+               </div>
+               <div class="chart-container result-panel">
+                   <h3>优化结果报告</h3>
+                   <div id="opt-report" class="report-content"></div>
+               </div>
+            </div>
+
+            <!-- DOE实验设计图表 -->
+            <div id="doe-panel-charts" style="display: none;">
+               <div class="chart-container">
+                   <h3>实验设计矩阵</h3>
+                   <div class="table-wrapper">
+                       <div id="doe-table" class="table-container"></div>
+                   </div>
+               </div>
+               <div class="chart-container">
+                   <h3>响应面分析 (D50)</h3>
+                   <div class="canvas-wrapper">
+                       <canvas id="doe-chart-1" class="chart-canvas"></canvas>
+                   </div>
+               </div>
+               <div class="chart-container">
+                   <h3>主效应图</h3>
+                   <div class="canvas-wrapper">
+                       <canvas id="doe-chart-2" class="chart-canvas"></canvas>
+                   </div>
+               </div>
+               <div class="chart-container result-panel">
+                   <h3>DOE分析报告</h3>
+                   <div id="doe-report" class="report-content"></div>
+               </div>
+            </div>
         </section>
     </main>
 
@@ -160,6 +384,9 @@
     <script src="js/exportExcel.js"></script>
     <script src="js/reactionKettle.js"></script>
     <script src="js/pipeReactor.js"></script>
+    <script src="js/sensitivityAnalysis.js"></script>
+    <script src="js/parameterOptimizer.js"></script>
+    <script src="js/doeDesign.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>
